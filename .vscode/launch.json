@@ -1,0 +1,9 @@
+{
+  "configurations": [
+    {
+      "name": "arrows_want_coffee_too",
+      "request": "launch",
+      "type": "dart"
+    }
+  ]
+}
