@@ -1,10 +1,21 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+
+const maxArrowDistanceInCanvasSpace = 180.0;
+
+const origin = Offset(0, 0);
+const screenWidth = 360;
+const screenHeight = 480;
+const screenMiddleX = screenWidth / 2;
+const screenMiddleY = screenHeight / 2;
 
 // The svg we were given was weird, we have the two points either side of
 // the base so we calculated the midpoint: (12019 + 01588) / 2 = 6803
-const arrowOrigin = Offset(34627, 6803);
-const arrowOriginX = 34627;
-const arrowOriginY = 6803;
+const arrowOriginOffset = Offset(34627, 6803);
+const arrowPointOffset = Offset(53117, 6803);
+const arrowOriginTranslateX = -34627.0;
+const arrowOriginTranslateY = -6803.0;
 
 void main() {
   runApp(const MainApp());
@@ -17,11 +28,14 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        body: SizedBox(
-          width: 360,
-          height: 480,
-          child: CustomPaint(
-            painter: ArrowPainter(),
+        body: Center(
+          child: Container(
+            decoration: BoxDecoration(border: Border.all()),
+            width: 360,
+            height: 480,
+            child: CustomPaint(
+              painter: ArrowPainter(const Offset(90, 90)),
+            ),
           ),
         ),
       ),
@@ -30,6 +44,10 @@ class MainApp extends StatelessWidget {
 }
 
 class ArrowPainter extends CustomPainter {
+  ArrowPainter(this.arrowFinishInCanvasSpace);
+
+  final Offset arrowFinishInCanvasSpace;
+
   final Path outerArrowPath = Path()
     ..moveTo(34627, 12019)
     ..lineTo(48643, 07692)
@@ -82,13 +100,29 @@ class ArrowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.translate(180, 240);
-    canvas.scale(0.01);
-    canvas.translate(-34627, 6803);
+    double scale = 0.01 *
+        arrowFinishInCanvasSpace.distance /
+        maxArrowDistanceInCanvasSpace;
+
+    // our rotaion calculation assumes distance of a & b are equal
+    double ax = 1.0;
+    double ay = 0.0;
+    double bx = arrowFinishInCanvasSpace.dx / arrowFinishInCanvasSpace.distance;
+    double by = arrowFinishInCanvasSpace.dy / arrowFinishInCanvasSpace.distance;
+
+    double rotation = acos((ax * bx + ay * by) /
+        (sqrt(ax * ax + ay * ay)) *
+        sqrt(bx * bx + by * by));
+
+    canvas.translate(screenMiddleX, screenMiddleY);
+    canvas.scale(scale);
+    canvas.rotate(rotation);
+    canvas.translate(arrowOriginTranslateX, arrowOriginTranslateY);
 
     canvas.drawPath(outerArrowPath, outerArrowPaint);
     canvas.drawPath(innerArrowPath, innerArrowPaint);
-    canvas.drawCircle(arrowOrigin, 500, circlePaint);
+    canvas.drawCircle(arrowOriginOffset, 500, circlePaint);
+    canvas.drawCircle(arrowPointOffset, 500, circlePaint);
   }
 
   @override
